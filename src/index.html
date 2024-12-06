@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pledge Watcher</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-eye"></i> Pledge Watcher</h1>
+        </header>
+        
+        <div class="search-container">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search by name, address, or handle...">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="pledgeTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>ETH Address</th>
+                        <th>Discord</th>
+                        <th>Invited By</th>
+                        <th>Tweet</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be populated here via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
