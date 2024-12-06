@@ -7,9 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const keepingPledgeFilter = document.getElementById('keepingPledgeFilter');
     const brokePledgeFilter = document.getElementById('brokePledgeFilter');
     const recommendedBreakerFilter = document.getElementById('recommendedBreakerFilter');
+    const keepingPledgeCount = document.getElementById('keepingPledgeCount');
+    const brokePledgeCount = document.getElementById('brokePledgeCount');
+    const recommendedBreakerCount = document.getElementById('recommendedBreakerCount');
     
     let pledgeData = []; // Will store the loaded data
-    let brokenPledges = new Set(); // Store broken pledge addresses
+    let brokenPledges = new Map(); // Store broken pledge addresses and their tx hashes
     let brokenPledgeNames = new Map(); // Store broken pledge addresses to names
 
     // Function to load data
@@ -21,9 +24,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Check for broken pledges
             const brokenPledgeEvents = await checkForBrokenPledges();
-            brokenPledges = new Set(brokenPledgeEvents.map(event => 
-                event.pledgerAddress.toLowerCase()
-            ));
+            brokenPledges = new Map(brokenPledgeEvents.map(event => [
+                event.pledgerAddress.toLowerCase(),
+                event.transactionHash
+            ]));
             
             // Create mapping of broken pledge addresses to names
             pledgeData.forEach(pledge => {
@@ -38,12 +42,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMessage.style.display = 'none';
             }, 3000);
 
+            updateCounts();
             filterAndRenderTable();
         } catch (error) {
             console.error('Error loading data:', error);
             statusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error loading data';
             statusMessage.style.color = 'var(--broken-pledge-color)';
         }
+    }
+
+    // Function to update counts
+    function updateCounts() {
+        let keepingCount = 0;
+        let brokenCount = 0;
+        let recommendedCount = 0;
+
+        pledgeData.forEach(pledge => {
+            const addressLower = pledge.address.toLowerCase();
+            const isBroken = brokenPledges.has(addressLower);
+            const invitedByName = wasInvitedByBrokenPledge(pledge);
+            
+            if (isBroken) {
+                brokenCount++;
+            } else if (invitedByName) {
+                recommendedCount++;
+            } else {
+                keepingCount++;
+            }
+        });
+
+        keepingPledgeCount.textContent = `(${keepingCount})`;
+        brokePledgeCount.textContent = `(${brokenCount})`;
+        recommendedBreakerCount.textContent = `(${recommendedCount})`;
     }
 
     // Function to truncate address
@@ -62,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to check if an address was invited by a broken pledge
     function wasInvitedByBrokenPledge(pledge) {
-        // Check invitedBy field and inviterAddresses array
         if (pledge.inviterAddresses && pledge.inviterAddresses.length > 0) {
             for (const inviterAddress of pledge.inviterAddresses) {
                 if (!inviterAddress) continue;
@@ -72,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
         return null;
     }
 
@@ -122,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const addressLower = pledge.address.toLowerCase();
             const isBroken = brokenPledges.has(addressLower);
             const invitedByName = invitedByBroken.get(addressLower);
+            const txHash = isBroken ? brokenPledges.get(addressLower) : null;
             
             if (isBroken) {
                 row.classList.add('broken-pledge');
@@ -137,7 +166,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="user-cell">
                         <span class="user-name">${pledge.name}</span>
                         <span class="user-handle">${pledge.handle}</span>
-                        ${isBroken ? '<span class="status-label broken-pledge-label">Broken Pledge</span>' : ''}
+                        ${isBroken ? `<span class="status-label broken-pledge-label">
+                            Broken Pledge 
+                            <a href="https://etherscan.io/tx/${txHash}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               style="color: white; text-decoration: underline;">
+                                (View Transaction)
+                            </a>
+                        </span>` : ''}
                         ${invitedByName ? `<span class="status-label recommended-breaker-label">Recommended Broken Pledge: ${invitedByName}</span>` : ''}
                     </div>
                 </td>
