@@ -1,5 +1,4 @@
-import { ethers } from 'ethers';
-import ABI from '../data/abi.json';
+import ABI from '../data/abi.js';
 
 const CONTRACT_ADDRESS = '0x910812c44ed2a3b611e4b051d9d83a88d652e2dd';
 const START_BLOCK = 21344733;
@@ -9,16 +8,16 @@ const FALLBACK_RPC = 'https://eth.llamarpc.com';
 function getProvider() {
     // Check if window.ethereum is available (MetaMask or other web3 wallet)
     if (typeof window !== 'undefined' && window.ethereum) {
-        return new ethers.providers.Web3Provider(window.ethereum);
+        return new window.ethers.providers.Web3Provider(window.ethereum);
     }
     // Fallback to LlamaRPC
-    return new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
+    return new window.ethers.providers.JsonRpcProvider(FALLBACK_RPC);
 }
 
 // Get contract instance
 function getContract() {
     const provider = getProvider();
-    return new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+    return new window.ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
 }
 
 // Generic query function for event filtering
@@ -47,8 +46,8 @@ async function checkForBrokenPledges() {
         const events = await query(contract, filter, START_BLOCK, latestBlock);
         return events.map(event => ({
             pledgerAddress: event.args.pledgerAddress,
-            transferredAmount: ethers.utils.formatEther(event.args.transferredAmount),
-            allowedTransferAmount: ethers.utils.formatEther(event.args.allowedTransferAmount),
+            transferredAmount: window.ethers.utils.formatEther(event.args.transferredAmount),
+            allowedTransferAmount: window.ethers.utils.formatEther(event.args.allowedTransferAmount),
             blockNumber: event.blockNumber,
             transactionHash: event.transactionHash
         }));
