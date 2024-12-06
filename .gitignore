@@ -1,7 +1,6 @@
 
 # History, and logs
 bin
-dist
 
 # Security
 **/keys/*
