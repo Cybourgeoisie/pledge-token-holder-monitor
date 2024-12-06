@@ -15,6 +15,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let brokenPledges = new Map(); // Store broken pledge addresses and their tx hashes
     let brokenPledgeNames = new Map(); // Store broken pledge addresses to names
 
+    // Function to truncate address
+    function truncateAddress(address) {
+        if (!address) return '-';
+        return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    }
+
+    // Function to create Twitter link
+    function createTwitterLink(url) {
+        if (!url) return '';
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-twitter"></i>
+        </a>`;
+    }
+
+    // Function to check if an address was invited by a broken pledge
+    function wasInvitedByBrokenPledge(pledge) {
+        if (pledge.inviterAddresses && pledge.inviterAddresses.length > 0) {
+            for (const inviterAddress of pledge.inviterAddresses) {
+                if (!inviterAddress) continue;
+                const inviterLower = inviterAddress.toLowerCase();
+                if (brokenPledges.has(inviterLower)) {
+                    return brokenPledgeNames.get(inviterLower) || 'Unknown';
+                }
+            }
+        }
+        return null;
+    }
+
     // Function to load data
     async function loadData() {
         try {
@@ -64,9 +92,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (isBroken) {
                 brokenCount++;
-            } else if (invitedByName) {
+            }
+            if (invitedByName) {
                 recommendedCount++;
-            } else {
+            }
+            if (!isBroken) {
                 keepingCount++;
             }
         });
@@ -74,34 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
         keepingPledgeCount.textContent = `(${keepingCount})`;
         brokePledgeCount.textContent = `(${brokenCount})`;
         recommendedBreakerCount.textContent = `(${recommendedCount})`;
-    }
-
-    // Function to truncate address
-    function truncateAddress(address) {
-        if (!address) return '-';
-        return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-    }
-
-    // Function to create Twitter link
-    function createTwitterLink(url) {
-        if (!url) return '';
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">
-            <i class="fab fa-twitter"></i>
-        </a>`;
-    }
-
-    // Function to check if an address was invited by a broken pledge
-    function wasInvitedByBrokenPledge(pledge) {
-        if (pledge.inviterAddresses && pledge.inviterAddresses.length > 0) {
-            for (const inviterAddress of pledge.inviterAddresses) {
-                if (!inviterAddress) continue;
-                const inviterLower = inviterAddress.toLowerCase();
-                if (brokenPledges.has(inviterLower)) {
-                    return brokenPledgeNames.get(inviterLower) || 'Unknown';
-                }
-            }
-        }
-        return null;
     }
 
     // Function to apply filters and search
@@ -131,9 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const addressLower = pledge.address.toLowerCase();
             const isBroken = brokenPledges.has(addressLower);
             const isRecommendedBreaker = invitedByBroken.has(addressLower);
-            const isKeepingPledge = !isBroken && !isRecommendedBreaker;
+            const isKeepingPledge = !isBroken;
             
-            return (isKeepingPledge && keepingPledgeFilter.checked) ||
+            return (!isBroken && keepingPledgeFilter.checked) ||
                    (isBroken && brokePledgeFilter.checked) ||
                    (isRecommendedBreaker && recommendedBreakerFilter.checked);
         });
@@ -175,7 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 (View Transaction)
                             </a>
                         </span>` : ''}
-                        ${invitedByName ? `<span class="status-label recommended-breaker-label">Recommended Broken Pledge: ${invitedByName}</span>` : ''}
+                        ${invitedByName ? `<span class="status-label recommended-breaker-label">Invited Pledge Breaker: ${invitedByName}</span>` : ''}
+                        ${!isBroken ? `<span class="status-label keeping-pledge-label">Keeping Pledge</span>` : ''}
                     </div>
                 </td>
                 <td>
