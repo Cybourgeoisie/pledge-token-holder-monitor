@@ -355,7 +355,7 @@ a:hover {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script>
-        const CONTRACT_ADDRESS = '0x910812c44ed2a3b611e4b051d9d83a88d652e2dd';
+      const CONTRACT_ADDRESS = '0x910812c44ed2a3b611e4b051d9d83a88d652e2dd';
 const START_BLOCK = 21344733;
 const FALLBACK_RPC = 'https://eth.llamarpc.com';
 const ABI = [
@@ -468,14 +468,16 @@ document.addEventListener('DOMContentLoaded', function() {
         </a>`;
     }
 
-    // Function to check if an address was invited by a broken pledge
-    function wasInvitedByBrokenPledge(pledge) {
-        if (pledge.inviterAddresses && pledge.inviterAddresses.length > 0) {
-            for (const inviterAddress of pledge.inviterAddresses) {
-                if (!inviterAddress) continue;
-                const inviterLower = inviterAddress.toLowerCase();
-                if (brokenPledges.has(inviterLower)) {
-                    return brokenPledgeNames.get(inviterLower) || 'Unknown';
+    // Function to check if an address invited someone who broke their pledge
+    function hasInvitedPledgeBreaker(pledge) {
+        const pledgerAddressLower = pledge.address.toLowerCase();
+        // Look through all pledges to find if this person invited any pledge breakers
+        for (const otherPledge of pledgeData) {
+            if (otherPledge.inviterAddresses && otherPledge.inviterAddresses.length > 0) {
+                const inviterAddressLower = otherPledge.inviterAddresses[0].toLowerCase();
+                // If this person was the inviter and the invitee broke their pledge
+                if (inviterAddressLower === pledgerAddressLower && brokenPledges.has(otherPledge.address.toLowerCase())) {
+                    return otherPledge.name || 'Unknown';
                 }
             }
         }
@@ -486,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadData() {
         try {
             // Load pledge data
-            pledgeData = getPledgeData();
+            pledgeData = await getPledgeData();
 
             // Check for broken pledges
             const brokenPledgeEvents = await checkForBrokenPledges();
@@ -526,12 +528,12 @@ document.addEventListener('DOMContentLoaded', function() {
         pledgeData.forEach(pledge => {
             const addressLower = pledge.address.toLowerCase();
             const isBroken = brokenPledges.has(addressLower);
-            const invitedByName = wasInvitedByBrokenPledge(pledge);
+            const invitedBreakerName = hasInvitedPledgeBreaker(pledge);
             
             if (isBroken) {
                 brokenCount++;
             }
-            if (invitedByName) {
+            if (invitedBreakerName) {
                 recommendedCount++;
             }
             if (!isBroken) {
@@ -557,12 +559,12 @@ document.addEventListener('DOMContentLoaded', function() {
             (pledge.invitedBy && pledge.invitedBy.toLowerCase().includes(searchTerm))
         );
 
-        // Create map of broken pledgers and their invitees
-        const invitedByBroken = new Map();
+        // Create map of pledgers who invited pledge breakers
+        const invitedBreakerMap = new Map();
         filteredData.forEach(pledge => {
-            const invitedByName = wasInvitedByBrokenPledge(pledge);
-            if (invitedByName) {
-                invitedByBroken.set(pledge.address.toLowerCase(), invitedByName);
+            const invitedBreakerName = hasInvitedPledgeBreaker(pledge);
+            if (invitedBreakerName) {
+                invitedBreakerMap.set(pledge.address.toLowerCase(), invitedBreakerName);
             }
         });
 
@@ -570,31 +572,31 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredData = filteredData.filter(pledge => {
             const addressLower = pledge.address.toLowerCase();
             const isBroken = brokenPledges.has(addressLower);
-            const isRecommendedBreaker = invitedByBroken.has(addressLower);
+            const hasInvitedBreaker = invitedBreakerMap.has(addressLower);
             const isKeepingPledge = !isBroken;
             
             return (!isBroken && keepingPledgeFilter.checked) ||
                    (isBroken && brokePledgeFilter.checked) ||
-                   (isRecommendedBreaker && recommendedBreakerFilter.checked);
+                   (hasInvitedBreaker && recommendedBreakerFilter.checked);
         });
 
-        renderTable(filteredData, invitedByBroken);
+        renderTable(filteredData, invitedBreakerMap);
     }
 
     // Function to render table
-    function renderTable(data, invitedByBroken) {
+    function renderTable(data, invitedBreakerMap) {
         tableBody.innerHTML = '';
         
         data.forEach(pledge => {
             const row = document.createElement('tr');
             const addressLower = pledge.address.toLowerCase();
             const isBroken = brokenPledges.has(addressLower);
-            const invitedByName = invitedByBroken.get(addressLower);
+            const invitedBreakerName = invitedBreakerMap.get(addressLower);
             const txHash = isBroken ? brokenPledges.get(addressLower) : null;
             
             if (isBroken) {
                 row.classList.add('broken-pledge');
-            } else if (invitedByName) {
+            } else if (invitedBreakerName) {
                 row.classList.add('recommended-breaker');
             }
             
@@ -615,12 +617,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 (View Transaction)
                             </a>
                         </span>` : ''}
-                        ${invitedByName ? `<span class="status-label recommended-breaker-label">Invited Pledge Breaker: ${invitedByName}</span>` : ''}
+                        ${invitedBreakerName ? `<span class="status-label recommended-breaker-label">Invited ${invitedBreakerName} (Pledge Breaker)</span>` : ''}
                         ${!isBroken ? `<span class="status-label keeping-pledge-label">Keeping Pledge</span>` : ''}
                     </div>
                 </td>
                 <td>
-                    <a href="https://etherscan.io/address/${pledge.address}" 
+                    <a href="https://etherscan.io/token/0x910812c44ed2a3b611e4b051d9d83a88d652e2dd?a=${pledge.address}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
                        title="${pledge.address}">
