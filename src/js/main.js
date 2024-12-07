@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </td>
                 <td>
-                    <a href="https://etherscan.io/address/${pledge.address}" 
+                    <a href="https://etherscan.io/token/0x910812c44ed2a3b611e4b051d9d83a88d652e2dd?a=${pledge.address}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
                        title="${pledge.address}">
