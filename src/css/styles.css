@@ -99,6 +99,27 @@ h1 i {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.download-button {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.download-button:hover {
+    background-color: #2980b9;
+}
+
+.download-button i {
+    font-size: 0.9rem;
+}
+
 .filter-option {
     display: flex;
     align-items: center;

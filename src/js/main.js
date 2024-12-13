@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const keepingPledgeCount = document.getElementById('keepingPledgeCount');
     const brokePledgeCount = document.getElementById('brokePledgeCount');
     const recommendedBreakerCount = document.getElementById('recommendedBreakerCount');
+    const downloadKeepersBtn = document.getElementById('downloadKeepersBtn');
     
     let pledgeData = []; // Will store the loaded data
     let brokenPledges = new Map(); // Store broken pledge addresses and their tx hashes
@@ -295,6 +296,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial load
     loadData();
+
+    // Download pledge keepers functionality
+    downloadKeepersBtn.addEventListener('click', () => {
+        // Get all pledge keepers (addresses of those who haven't broken their pledge)
+        const pledgeKeepers = pledgeData.filter(pledge => 
+            !brokenPledges.has(pledge.address.toLowerCase())
+        ).map(pledge => pledge.address);
+
+        // Create the content with one address per line
+        const content = pledgeKeepers.join('\n');
+
+        // Create blob and download
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pledge-keepers.txt';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    });
 });
 
 async function getPledgeData() {
